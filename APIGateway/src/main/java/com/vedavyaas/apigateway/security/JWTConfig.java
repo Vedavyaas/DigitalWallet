@@ -15,59 +15,72 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
+import org.springframework.core.io.ClassPathResource;
+
+import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.UUID;
 
 @Configuration
 @EnableWebFluxSecurity
 public class JWTConfig {
 
-    private static volatile KeyPair fallbackKeyPair;
-
-    @Bean
-    KeyPair rsaKeyPair() {
-        return getOrCreateFallbackKeyPair();
-    }
-
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http.csrf(ServerHttpSecurity.CsrfSpec::disable);
         http.authorizeExchange(exchange -> exchange
-                .pathMatchers("/eureka/**","/create/account/**","/login/account/**","/hello").permitAll()
+                .pathMatchers("/eureka/**","/create/account/**","/login/account/**").permitAll()
                 .anyExchange().authenticated());
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
         return http.build();
     }
 
     @Bean
-    RSAPrivateKey privateKey(KeyPair rsaKeyPair) {
-        return (RSAPrivateKey) rsaKeyPair.getPrivate();
+    RSAPrivateKey privateKey() {
+        return loadPrivateKeyFromPem("keys/jwt-private.pem");
     }
 
     @Bean
-    RSAPublicKey publicKey(KeyPair rsaKeyPair) {
-        return (RSAPublicKey) rsaKeyPair.getPublic();
+    RSAPublicKey publicKey() {
+        return loadPublicKeyFromPem("keys/jwt-public.pem");
     }
 
-    private static KeyPair getOrCreateFallbackKeyPair() {
-        KeyPair kp = fallbackKeyPair;
-        if (kp != null) {
-            return kp;
+    private static RSAPublicKey loadPublicKeyFromPem(String classpathLocation) {
+        try {
+            byte[] pemBytes = new ClassPathResource(classpathLocation).getContentAsByteArray();
+            String pem = new String(pemBytes, StandardCharsets.US_ASCII);
+            String base64 = pem
+                    .replace("-----BEGIN PUBLIC KEY-----", "")
+                    .replace("-----END PUBLIC KEY-----", "")
+                    .replaceAll("\\s", "");
+            byte[] der = Base64.getDecoder().decode(base64);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(der);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return (RSAPublicKey) kf.generatePublic(spec);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load RSA public key from classpath: " + classpathLocation, e);
         }
-        synchronized (JWTConfig.class) {
-            if (fallbackKeyPair == null) {
-                try {
-                    KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-                    generator.initialize(2048);
-                    fallbackKeyPair = generator.generateKeyPair();
-                } catch (Exception e) {
-                    throw new IllegalStateException("Failed to generate fallback RSA keypair", e);
-                }
-            }
-            return fallbackKeyPair;
+    }
+
+    private static RSAPrivateKey loadPrivateKeyFromPem(String classpathLocation) {
+        try {
+            byte[] pemBytes = new ClassPathResource(classpathLocation).getContentAsByteArray();
+            String pem = new String(pemBytes, StandardCharsets.US_ASCII);
+            String base64 = pem
+                    .replace("-----BEGIN PRIVATE KEY-----", "")
+                    .replace("-----END PRIVATE KEY-----", "")
+                    .replaceAll("\\s", "");
+            byte[] der = Base64.getDecoder().decode(base64);
+            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(der);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return (RSAPrivateKey) kf.generatePrivate(spec);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load RSA private key from classpath: " + classpathLocation, e);
         }
     }
 

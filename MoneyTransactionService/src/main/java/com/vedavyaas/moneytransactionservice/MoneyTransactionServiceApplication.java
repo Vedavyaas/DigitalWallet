@@ -12,4 +12,9 @@ public class MoneyTransactionServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(MoneyTransactionServiceApplication.class, args);
     }
+
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello World";
+    }
 }
