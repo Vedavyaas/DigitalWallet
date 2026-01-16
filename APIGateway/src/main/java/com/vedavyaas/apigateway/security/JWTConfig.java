@@ -34,7 +34,17 @@ public class JWTConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         http.csrf(ServerHttpSecurity.CsrfSpec::disable);
         http.authorizeExchange(exchange -> exchange
-                .pathMatchers("/eureka/**","/create/account/**","/login/account/**").permitAll()
+            .pathMatchers(
+                "/",
+                "/ui/**",
+                "/css/**",
+                "/js/**",
+                "/favicon.ico",
+                "/error",
+                "/eureka/**",
+                "/create/account/**",
+                "/login/account/**"
+            ).permitAll()
                 .anyExchange().authenticated());
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
         return http.build();

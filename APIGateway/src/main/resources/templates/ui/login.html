@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DigitalWallet • Login</title>
+  <link rel="stylesheet" th:href="@{/css/ui.css}" href="/css/ui.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="card">
+      <div class="row">
+        <div>
+          <h1>Login</h1>
+          <div class="muted">Sign in to continue.</div>
+        </div>
+        <a class="btn" th:href="@{/ui/register}" href="/ui/register">Create account</a>
+      </div>
+
+      <div id="alert" class="alert" style="display:none"></div>
+
+      <label>
+        <span>Username</span>
+        <input id="username" type="text" autocomplete="username" />
+      </label>
+      <label>
+        <span>Password</span>
+        <input id="password" type="password" autocomplete="current-password" />
+      </label>
+
+      <button id="loginBtn" class="btn primary" type="button">Login</button>
+
+      <div class="footer muted">Go to <a th:href="@{/ui/register}" href="/ui/register">register</a> if you’re new.</div>
+    </section>
+  </main>
+
+  <script th:src="@{/js/ui-flow.js}" src="/js/ui-flow.js"></script>
+  <script>
+    window.DW_PAGE = "login";
+  </script>
+</body>
+</html>

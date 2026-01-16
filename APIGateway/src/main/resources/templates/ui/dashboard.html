@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DigitalWallet • Dashboard</title>
+  <link rel="stylesheet" th:href="@{/css/ui.css}" href="/css/ui.css" />
+  <style>
+    .card { width: min(760px, 100%); }
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+    @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+    .pill { font-size: 12px; color: rgba(255,255,255,0.8); border: 1px solid var(--border); padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.04); }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="card">
+      <div class="topbar">
+        <div>
+          <h1>Dashboard</h1>
+          <div class="muted">Deposit, withdraw, or check balance.</div>
+        </div>
+        <div style="display:flex; gap: 10px; align-items:center;">
+          <div id="whoami" class="pill">Not logged in</div>
+          <button id="logoutBtn" class="btn" type="button">Logout</button>
+        </div>
+      </div>
+
+      <div id="alert" class="alert" style="display:none"></div>
+
+      <div class="grid2">
+        <div class="tile">
+          <div class="title">Deposit</div>
+          <div class="muted">Add money to wallet.</div>
+          <label>
+            <span>Amount</span>
+            <input id="depositAmount" type="number" min="0" step="0.01" placeholder="100.00" />
+          </label>
+          <button id="depositBtn" class="btn primary" type="button">Deposit</button>
+        </div>
+
+        <div class="tile">
+          <div class="title">Withdraw</div>
+          <div class="muted">Take money from wallet.</div>
+          <label>
+            <span>Amount</span>
+            <input id="withdrawAmount" type="number" min="0" step="0.01" placeholder="50.00" />
+          </label>
+          <button id="withdrawBtn" class="btn" type="button">Withdraw</button>
+        </div>
+
+        <div class="tile" style="grid-column: 1 / -1;">
+          <div class="row">
+            <div>
+              <div class="title">Balance</div>
+              <div class="muted">Fetch current wallet balance.</div>
+            </div>
+            <button id="balanceBtn" class="btn" type="button">Get balance</button>
+          </div>
+          <div class="big">
+            <div class="muted">Result</div>
+            <div id="balanceValue" class="amount">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script th:src="@{/js/ui-flow.js}" src="/js/ui-flow.js"></script>
+  <script>
+    window.DW_PAGE = "dashboard";
+  </script>
+</body>
+</html>
