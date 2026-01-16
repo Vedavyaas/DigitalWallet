@@ -1,24 +1,31 @@
-package com.vedavyaas.apigateway.user;
+package com.vedavyaas.walletservice.repository;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+import java.math.BigDecimal;
+
 @Entity
-public class UserEntity {
+public class WalletEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String username;
-    private String password;
+    private BigDecimal balance;
 
-    public UserEntity() {
+    public WalletEntity() {
     }
 
-    public UserEntity(String username, String password) {
+    public WalletEntity(String username) {
         this.username = username;
-        this.password = password;
+        this.balance = new BigDecimal("0.00");
+    }
+
+    public WalletEntity(String username, BigDecimal balance) {
+        this.username = username;
+        this.balance = balance;
     }
 
     public Long getId() {
@@ -37,11 +44,11 @@ public class UserEntity {
         this.username = username;
     }
 
-    public String getPassword() {
-        return password;
+    public BigDecimal getBalance() {
+        return balance;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
     }
 }

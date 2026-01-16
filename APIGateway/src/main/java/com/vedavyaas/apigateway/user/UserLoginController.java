@@ -1,7 +1,7 @@
 package com.vedavyaas.apigateway.user;
 
-import com.vedavyaas.apigateway.records.JWTResponse;
-import com.vedavyaas.apigateway.records.LoginRequest;
+import com.vedavyaas.apigateway.assets.JWTResponse;
+import com.vedavyaas.apigateway.assets.LoginRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

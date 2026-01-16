@@ -1,7 +1,9 @@
 package com.vedavyaas.apigateway.user;
 
-import com.vedavyaas.apigateway.records.JWTResponse;
-import com.vedavyaas.apigateway.records.LoginRequest;
+import com.vedavyaas.apigateway.assets.JWTResponse;
+import com.vedavyaas.apigateway.assets.LoginRequest;
+import com.vedavyaas.apigateway.repository.UserEntity;
+import com.vedavyaas.apigateway.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

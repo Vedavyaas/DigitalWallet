@@ -1,4 +1,4 @@
-package com.vedavyaas.apigateway.user;
+package com.vedavyaas.apigateway.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
