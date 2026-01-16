@@ -1,5 +1,7 @@
 package com.vedavyaas.apigateway.security;
 
+import com.vedavyaas.apigateway.user.UserEntity;
+import com.vedavyaas.apigateway.user.UserRepository;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

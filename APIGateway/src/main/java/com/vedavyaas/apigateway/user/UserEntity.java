@@ -1,4 +1,4 @@
-package com.vedavyaas.apigateway.security;
+package com.vedavyaas.apigateway.user;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
