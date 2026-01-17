@@ -10,6 +10,8 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 public class TransactionService {
     private final MessagePublisher messagePublisher;
@@ -23,12 +25,14 @@ public class TransactionService {
 
     @Transactional
     @CircuitBreaker(name = "transaction", fallbackMethod = "fallBackTransaction")
-    public void transaction(TransactionDetails transactionDetails) {
+    public void transaction(String message) {
+        String[] messages = message.split(",");
+        TransactionDetails transactionDetails = new TransactionDetails(messages[0], messages[1], new BigDecimal(messages[2]));
         WalletEntity walletEntity = walletRepository.findByUsername(transactionDetails.user()).get();
         WalletEntity walletEntity1 = walletRepository.findByUsername(transactionDetails.toUser()).get();
 
         if (walletEntity.getBalance().compareTo(transactionDetails.amount()) <= 0) {
-            messagePublisher.messagePublisher(new TransactionResponse(transactionDetails.user(), Status.FAILURE));
+            messagePublisher.messagePublisher(transactionDetails.user() + "," + "FAILURE");
             return;
         }
 
@@ -37,11 +41,11 @@ public class TransactionService {
 
         walletRepository.save(walletEntity);
         walletRepository.save(walletEntity1);
-        messagePublisher.messagePublisher(new TransactionResponse(transactionDetails.user(), Status.SUCCESS));
+        messagePublisher.messagePublisher(transactionDetails.user() + "," + "SUCCESS");
     }
 
-    public void fallBackTransaction(TransactionDetails transactionDetails, Throwable t) {
+    public void fallBackTransaction(String message, Throwable t) {
         //ignore throwable
-        messagePublisher.messagePublisher(new TransactionResponse(transactionDetails.user(), Status.FAILURE));
+        messagePublisher.messagePublisher(message.split(",")[0] + "," + "SUCCESS");
     }
 }

@@ -7,13 +7,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class KafkaMessagePublisher {
 
-    private final KafkaTemplate<String, TransactionDetails> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public KafkaMessagePublisher(KafkaTemplate<String, TransactionDetails> kafkaTemplate) {
+    public KafkaMessagePublisher(KafkaTemplate<String, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void publishTransactionMessage(TransactionDetails transactionDetails) {
-        kafkaTemplate.send("transaction-request", transactionDetails);
+    public void publishTransactionMessage(String message) {
+        kafkaTemplate.send("transaction-request", message);
     }
 }

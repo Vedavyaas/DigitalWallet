@@ -30,7 +30,7 @@ public class KafkaListener {
     }
 
     @org.springframework.kafka.annotation.KafkaListener(topics = "transaction-request", groupId = "walletGroup")
-    public void transactionMessageListener(TransactionDetails transactionDetails){
-        transactionService.transaction(transactionDetails);
+    public void transactionMessageListener(String message){
+        transactionService.transaction(message);
     }
 }

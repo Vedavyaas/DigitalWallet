@@ -6,13 +6,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class MessagePublisher {
-    private final KafkaTemplate<String, TransactionResponse> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public MessagePublisher(KafkaTemplate<String, TransactionResponse> kafkaTemplate) {
+    public MessagePublisher(KafkaTemplate<String, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void messagePublisher(TransactionResponse transactionResponse) {
-        kafkaTemplate.send("transaction-response", transactionResponse);
+    public void messagePublisher(String message) {
+        kafkaTemplate.send("transaction-response", message);
     }
 }

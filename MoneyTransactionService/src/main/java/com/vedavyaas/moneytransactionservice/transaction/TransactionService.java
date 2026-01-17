@@ -36,13 +36,19 @@ public class TransactionService {
         transactionEntity1.setStatus(Status.PENDING);
         transactionRepository.save(transactionEntity1);
 
-        kafkaMessagePublisher.publishTransactionMessage(new TransactionDetails(user, toUser, amount));
+        String message = user + "," + toUser + "," + amount;
+
+        kafkaMessagePublisher.publishTransactionMessage(message);
         return "Transaction pending";
     }
 
-    public void completeTransaction(TransactionResponse transactionResponse) {
-        TransactionEntity transactionEntity = transactionRepository.findByUsername(transactionResponse.user());
-        transactionEntity.setStatus(transactionResponse.status());
+    public void completeTransaction(String message) {
+        TransactionEntity transactionEntity = transactionRepository.findByUsername(message.split(",")[0]);
+        String status = message.split(",")[1];
+        Status statuss;
+        if(status.equals("SUCCESS")) statuss = Status.SUCCESS;
+        else statuss = Status.FAILURE;
+        transactionEntity.setStatus(statuss);
         transactionRepository.save(transactionEntity);
     }
 

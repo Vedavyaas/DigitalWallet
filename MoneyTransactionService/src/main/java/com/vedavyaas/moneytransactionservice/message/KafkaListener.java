@@ -25,7 +25,7 @@ public class KafkaListener {
     }
 
     @org.springframework.kafka.annotation.KafkaListener(topics = "transaction-response", groupId = "transactionGroup")
-    public void transactionListener(TransactionResponse transactionResponse){
-        transactionService.completeTransaction(transactionResponse);
+    public void transactionListener(String message){
+        transactionService.completeTransaction(message);
     }
 }
