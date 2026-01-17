@@ -2,6 +2,7 @@ package com.vedavyaas.apigateway.user;
 
 import com.vedavyaas.apigateway.assets.JWTResponse;
 import com.vedavyaas.apigateway.assets.LoginRequest;
+import com.vedavyaas.apigateway.message.KafkaMessagePublisher;
 import com.vedavyaas.apigateway.repository.UserEntity;
 import com.vedavyaas.apigateway.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
@@ -26,11 +27,14 @@ public class UserLoginService {
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
 
-    public UserLoginService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtEncoder jwtEncoder) {
+    private final KafkaMessagePublisher kafkaMessagePublisher;
+
+    public UserLoginService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtEncoder jwtEncoder, KafkaMessagePublisher kafkaMessagePublisher) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtEncoder = jwtEncoder;
+        this.kafkaMessagePublisher = kafkaMessagePublisher;
     }
 
     public String createAccount(LoginRequest loginRequest) {
@@ -39,6 +43,7 @@ public class UserLoginService {
         UserEntity user = new UserEntity(loginRequest.username(), passwordEncoder.encode(loginRequest.password()));
         userRepository.save(user);
 
+        kafkaMessagePublisher.publishEvent(user.getUsername());
         return "User created";
     }
 

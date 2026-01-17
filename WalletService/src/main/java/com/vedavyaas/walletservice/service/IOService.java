@@ -21,9 +21,12 @@ public class IOService {
     @Transactional
     @LogAnnotation(action = "Deposited amount: ")
     public String deposit(String user, BigDecimal amount) {
-        checkAndCreateAccount(user);
+        Optional<WalletEntity> optionalWalletEntity = walletRepository.findByUsername(user);
 
-        WalletEntity walletEntity = walletRepository.findByUsername(user);
+        //Almost impossible in perfect workflow
+        if(optionalWalletEntity.isEmpty()) return "User not found";
+
+        WalletEntity walletEntity = optionalWalletEntity.get();
         walletEntity.setBalance(walletEntity.getBalance().add(amount));
         walletRepository.save(walletEntity);
 
@@ -33,9 +36,12 @@ public class IOService {
     @Transactional
     @LogAnnotation(action = "Withdrawn amount: ")
     public String withdraw(String user, BigDecimal amount) {
-        checkAndCreateAccount(user);
+        Optional<WalletEntity> optionalWalletEntity = walletRepository.findByUsername(user);
 
-        WalletEntity walletEntity = walletRepository.findByUsername(user);
+        //Almost impossible in perfect workflow
+        if(optionalWalletEntity.isEmpty()) return "User not found";
+
+        WalletEntity walletEntity = optionalWalletEntity.get();
         if (walletEntity.getBalance().compareTo(amount) < 0) {
             return "Withdrawal failed. Current balance is " + walletEntity.getBalance();
         }
@@ -47,20 +53,17 @@ public class IOService {
 
     @LogAnnotation(action = "Balance check")
     public String checkBalance(String user) {
-        checkAndCreateAccount(user);
-        WalletEntity walletEntity = walletRepository.findByUsername(user);
+        Optional<WalletEntity> optionalWalletEntity = walletRepository.findByUsername(user);
 
+        //Almost impossible in perfect workflow
+        if(optionalWalletEntity.isEmpty()) return "User not found";
+
+        WalletEntity walletEntity = optionalWalletEntity.get();
         return "Current balance in your account is: " + walletEntity.getBalance().toString();
     }
 
-    private void checkAndCreateAccount(String user) {
-        if (!walletRepository.existsByUsername(user)) {
-            WalletEntity walletEntityNew = new WalletEntity(user);
-            walletRepository.save(walletEntityNew);
-        }
-    }
-
     public List<HistoryEntity> getHistory(String user) {
-        return historyRepository.findHistoryEntitiesByUser((walletRepository.findByUsername(user)));
+        Optional<WalletEntity> optionalWalletEntity = walletRepository.findByUsername(user);
+        return optionalWalletEntity.map(historyRepository::findHistoryEntitiesByUser).orElse(null);
     }
 }

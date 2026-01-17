@@ -30,7 +30,7 @@ public class LogAspect {
         String user = SecurityContextHolder.getContext().getAuthentication().getName();
         if (user == null) user = "anonymous";
 
-        HistoryEntity historyEntity = new HistoryEntity(walletRepository.findByUsername(user), message.toString());
+        HistoryEntity historyEntity = new HistoryEntity(walletRepository.findByUsername(user).get(), message.toString());
         historyRepository.save(historyEntity);
     }
 }
