@@ -1,5 +1,6 @@
 package com.vedavyaas.walletservice.wallet;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vedavyaas.walletservice.bank.BankAccountRegistration;
 import jakarta.persistence.*;
 
@@ -67,6 +68,7 @@ public class BankAccountEntity {
         this.accountNumber = accountNumber;
     }
 
+    @JsonProperty("cifnumber")
     public String getCIFNumber() {
         return CIFNumber;
     }
@@ -83,6 +85,7 @@ public class BankAccountEntity {
         this.branch = branch;
     }
 
+    @JsonProperty("ifsccode")
     public String getIFSCCode() {
         return IFSCCode;
     }

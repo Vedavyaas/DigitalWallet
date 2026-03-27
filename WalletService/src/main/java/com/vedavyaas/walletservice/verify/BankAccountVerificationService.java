@@ -71,10 +71,15 @@ public class BankAccountVerificationService {
                          bankAccountEntity.getBankName() + "," + 
                          bankAccountEntity.getAccountType() + "," + 
                          bankAccountEntity.getEmailBank();
+        System.out.println("================= KAFKA MESSAGE ====================");
+        System.out.println("Sending verification message: " + payload);
+        System.out.println("Topic: bank-account-verification");
+        System.out.println("====================================================");
         kafkaTemplate.send("bank-account-verification", payload);
     }
 
     @KafkaListener(topics = "bank-account-verification-reply", groupId = "walletGroup")
+    @Transactional
     public void checkAndSetVerification(String messages){
         //messages has username,account number,verified as true or false
         String[] message = messages.split(",");

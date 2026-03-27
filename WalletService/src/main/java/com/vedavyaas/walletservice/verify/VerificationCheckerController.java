@@ -17,6 +17,10 @@ public class VerificationCheckerController {
 
     @GetMapping("get/status")
     public ResponseEntity<VerificationStatus> getBankAccountVerificationStatus(@RequestParam String accountNumber, @AuthenticationPrincipal Jwt jwt) {
-        return ResponseEntity.ok(verificationRepository.findByUsernameAndAccountNumber(jwt.getSubject(), accountNumber).getVerificationStatus());
+        VerificationEntity entity = verificationRepository.findByUsernameAndAccountNumber(jwt.getSubject(), accountNumber);
+        if (entity == null) {
+            return ResponseEntity.ok(VerificationStatus.PENDING);
+        }
+        return ResponseEntity.ok(entity.getVerificationStatus());
     }
 }

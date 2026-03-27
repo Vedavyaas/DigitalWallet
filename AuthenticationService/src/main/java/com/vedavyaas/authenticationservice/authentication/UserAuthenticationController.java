@@ -28,4 +28,9 @@ public class UserAuthenticationController {
     public ResponseEntity<String> handle(DuplicateCredentialException ex) {
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
+
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<String> handleBadCredentials(org.springframework.security.authentication.BadCredentialsException ex) {
+        return ResponseEntity.status(401).body("Invalid username or password. Please create an account first.");
+    }
 }

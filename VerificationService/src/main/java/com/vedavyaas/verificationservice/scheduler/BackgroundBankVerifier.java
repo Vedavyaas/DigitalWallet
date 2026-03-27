@@ -51,7 +51,7 @@ public class BackgroundBankVerifier {
         do {
             bankDetailsEntityPage = bankDetailsRepository.findByVerifiedIs(VerificationStatus.VERIFIED, pageable);
             for (var i : bankDetailsEntityPage) {
-                String data = i.getUsername() + "," + i.getAccountNumber() + "true";
+                String data = i.getUsername() + "," + i.getAccountNumber() + "," + "true";
                 kafkaTemplate.send("bank-account-verification-reply", data);
                 bankDetailsRepository.delete(i);
             }
@@ -66,7 +66,7 @@ public class BackgroundBankVerifier {
         do {
             bankDetailsEntityPage = bankDetailsRepository.findByVerifiedIs(VerificationStatus.FAILED, pageable);
             for (var i : bankDetailsEntityPage) {
-                String data = i.getUsername() + "," + i.getAccountNumber() + "false";
+                String data = i.getUsername() + "," + i.getAccountNumber() + "," + "false";
                 kafkaTemplate.send("bank-account-verification-reply", data);
                 bankDetailsRepository.delete(i);
             }

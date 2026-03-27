@@ -29,7 +29,7 @@ public class BankAccountService {
                     "this account number already exists.");
         }
 
-        if (bankAccountRegistration.emailBank().equals(wallet.getEmail())) {
+        if (!bankAccountRegistration.emailBank().equals(wallet.getEmail())) {
             throw new InvalidCredentialsException("Invalid email, email must match.");
         }
 
@@ -44,6 +44,7 @@ public class BankAccountService {
 
     public List<BankAccountEntity> findAllBankAccountsRegistered(String username) {
         WalletEntity wallet = walletRepository.findByUsername(username);
+        if (wallet == null || wallet.getBankAccounts() == null) return null;
         return wallet.getBankAccounts();
     }
 
@@ -73,17 +74,17 @@ public class BankAccountService {
             if (Objects.equals(bankId, i.getId())) {
                 if (!i.isVerified()) {
                     if (!i.isUpdated()) {
-                        i.setUpdated(true);
+                        i.setUserUpdateRequest(true);
+                        i.setUpdated(false);
                         bankAccountRepository.save(i);
-                        break;
+                        return "Bank account verification in-progress";
                     }
                     else throw new VerificationPendingException("Bank account verification is in-progress");
                 }
                 else throw new InvalidCredentialsException("Bank account is already verified.");
             }
-            else throw new InvalidCredentialsException("Not valid bank id.");
         }
 
-        return "Bank account verification in-progress";
+        throw new InvalidCredentialsException("Not valid bank id.");
     }
 }
