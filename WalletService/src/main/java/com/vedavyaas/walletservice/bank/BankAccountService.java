@@ -1,5 +1,7 @@
 package com.vedavyaas.walletservice.bank;
 
+import com.vedavyaas.walletservice.default_initialization.DefaultMessageEntity;
+import com.vedavyaas.walletservice.default_initialization.DefaultMessageRepository;
 import com.vedavyaas.walletservice.wallet.BankAccountEntity;
 import com.vedavyaas.walletservice.wallet.BankAccountRepository;
 import com.vedavyaas.walletservice.wallet.WalletEntity;
@@ -14,10 +16,12 @@ import java.util.Objects;
 public class BankAccountService {
     private final BankAccountRepository bankAccountRepository;
     private final WalletRepository walletRepository;
+    private final DefaultMessageRepository defaultMessageRepository;
 
-    public BankAccountService(BankAccountRepository bankAccountRepository, WalletRepository walletRepository) {
+    public BankAccountService(BankAccountRepository bankAccountRepository, WalletRepository walletRepository, DefaultMessageRepository defaultMessageRepository) {
         this.bankAccountRepository = bankAccountRepository;
         this.walletRepository = walletRepository;
+        this.defaultMessageRepository = defaultMessageRepository;
     }
 
     @Transactional
@@ -48,6 +52,7 @@ public class BankAccountService {
         return wallet.getBankAccounts();
     }
 
+    @Transactional
     public String registerDefaultBankAccount(Long bankId, String username) {
         WalletEntity wallet = walletRepository.findByUsername(username);
         List<BankAccountEntity> bankAccountEntities = wallet.getBankAccounts();
@@ -57,6 +62,8 @@ public class BankAccountService {
                 if(i.isVerified()) {
                     wallet.setPrimaryBankAccount(i.getAccountNumber());
                     walletRepository.save(wallet);
+                    DefaultMessageEntity defaultMessageEntity = new DefaultMessageEntity(username, i.getAccountNumber());
+                    defaultMessageRepository.save(defaultMessageEntity);
                     break;
                 }
                 else throw new VerificationPendingException("Bank account verification pending.");
