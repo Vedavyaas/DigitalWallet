@@ -15,6 +15,7 @@ public class PaymentEntity {
     private String username;
     private String accountNumber;
     private BigDecimal balance;
+    private State currentState;
 
     public PaymentEntity() {
     }
@@ -55,5 +56,13 @@ public class PaymentEntity {
 
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
+    }
+
+    public State getCurrentState() {
+        return currentState;
+    }
+
+    public void setCurrentState(State currentState) {
+        this.currentState = currentState;
     }
 }
