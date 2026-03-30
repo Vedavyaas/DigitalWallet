@@ -412,3 +412,160 @@ body::before {
   .register-form .form-row { grid-template-columns: 1fr; }
   .auth-card { padding: 34px 22px 26px; }
 }
+
+/* ════════ PAYMENT STRIP (on account cards) ════════ */
+
+.ac-pay-strip {
+  display: flex; gap: 6px;
+  margin: 14px 0 4px;
+  padding: 10px 0 0;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.pay-strip-btn {
+  flex: 1; padding: 7px 6px;
+  border-radius: 8px;
+  font-family: var(--font); font-size: 11.5px; font-weight: 600;
+  cursor: pointer; border: 1px solid;
+  transition: transform 0.13s, opacity 0.13s;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.pay-strip-btn:hover { transform: translateY(-1px); opacity: 0.82; }
+
+.pay-strip-deposit  { background: var(--green-lo); border-color: var(--green-b); color: var(--green); }
+.pay-strip-withdraw { background: var(--amber-lo); border-color: var(--amber-b); color: var(--amber); }
+.pay-strip-send     { background: var(--blue-lo);  border-color: var(--blue-b);  color: var(--blue); }
+
+/* ════════ PAYMENT HUB VIEW ════════ */
+
+.balance-card {
+  background: linear-gradient(140deg, #007AFF 0%, #0050c8 100%);
+  border-radius: var(--r3);
+  padding: 28px 30px;
+  margin-bottom: 28px;
+  box-shadow: 0 8px 28px rgba(0,122,255,0.30);
+  color: white;
+}
+.balance-label  { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; opacity: 0.72; margin-bottom: 8px; }
+.balance-amount { font-size: 36px; font-weight: 700; letter-spacing: -1px; }
+
+.pay-section-title {
+  font-size: 13px; font-weight: 700;
+  color: var(--t2); text-transform: uppercase; letter-spacing: 0.6px;
+  margin-bottom: 12px;
+}
+
+.pay-account-list { display: flex; flex-direction: column; gap: 10px; }
+
+.pay-account-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: var(--glass-strong);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(255,255,255,0.88);
+  border-radius: var(--r2); padding: 16px 20px;
+  box-shadow: var(--shadowCard);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.pay-account-row:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,0.09); }
+
+.pay-acc-info { display: flex; align-items: center; gap: 12px; }
+.pay-acc-emoji { font-size: 26px; }
+.pay-acc-bank  { font-size: 14px; font-weight: 700; color: var(--t1); }
+.pay-acc-num   { font-size: 12px; color: var(--t2); margin-top: 2px; font-family: 'SF Mono','Fira Code',monospace; }
+
+.pay-acc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.pay-action-btn {
+  padding: 8px 14px; border-radius: 8px;
+  font-family: var(--font); font-size: 12.5px; font-weight: 600;
+  cursor: pointer; border: 1px solid;
+  transition: transform 0.12s, opacity 0.14s;
+}
+.pay-action-btn:hover { transform: translateY(-1px); opacity: 0.80; }
+
+.pay-action-deposit  { background: var(--green-lo); border-color: var(--green-b); color: var(--green); }
+.pay-action-withdraw { background: var(--amber-lo); border-color: var(--amber-b); color: var(--amber); }
+.pay-action-send     { background: var(--blue-lo);  border-color: var(--blue-b);  color: var(--blue); }
+
+/* ════════ PAYMENT MODAL ════════ */
+
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.28);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: fadeIn 0.18s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-sheet {
+  width: 100%; max-width: 480px;
+  background: var(--glass-strong);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(255,255,255,0.88);
+  border-radius: var(--r4) var(--r4) 0 0;
+  padding: 24px 26px 36px;
+  box-shadow: 0 -12px 50px rgba(0,0,0,0.16);
+  animation: slideUp 0.28s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 18px;
+}
+
+.modal-acc-chip {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13.5px; font-weight: 600; color: var(--t1);
+}
+
+.modal-close {
+  background: rgba(0,0,0,0.07); border: none;
+  width: 28px; height: 28px; border-radius: 50%;
+  font-size: 12px; cursor: pointer; color: var(--t2);
+  transition: background 0.15s;
+}
+.modal-close:hover { background: rgba(0,0,0,0.13); }
+
+.modal-tabs {
+  display: flex; gap: 6px; margin-bottom: 20px;
+  background: rgba(0,0,0,0.05); border-radius: var(--r1);
+  padding: 4px;
+}
+
+.modal-tab {
+  flex: 1; padding: 8px 4px;
+  border: none; border-radius: 8px;
+  background: transparent;
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  cursor: pointer; color: var(--t2);
+  transition: background 0.15s, color 0.15s;
+}
+.modal-tab:hover { background: rgba(255,255,255,0.5); color: var(--t1); }
+
+.modal-tab-active-deposit  { background: white !important; color: var(--green) !important; box-shadow: 0 1px 6px rgba(0,0,0,0.10); }
+.modal-tab-active-withdraw { background: white !important; color: var(--amber) !important; box-shadow: 0 1px 6px rgba(0,0,0,0.10); }
+.modal-tab-active-send     { background: white !important; color: var(--blue)  !important; box-shadow: 0 1px 6px rgba(0,0,0,0.10); }
+
+.modal-form { display: flex; flex-direction: column; }
+
+.modal-amount-input {
+  font-size: 22px !important; font-weight: 700 !important;
+  text-align: center; letter-spacing: -0.5px;
+  margin-bottom: 16px;
+}
+
+.modal-submit-btn {
+  margin-top: 18px; padding: 13px;
+  border: none; border-radius: var(--r1);
+  font-family: var(--font); font-size: 15px; font-weight: 700;
+  cursor: pointer; color: white;
+  transition: opacity 0.15s, transform 0.12s;
+}
+.modal-submit-btn:hover:not(:disabled)     { opacity: 0.88; transform: translateY(-1px); }
+.modal-submit-btn:disabled                 { opacity: 0.45; cursor: not-allowed; }
+.modal-submit-deposit  { background: var(--green); box-shadow: 0 4px 16px rgba(40,167,69,0.35); }
+.modal-submit-withdraw { background: var(--amber); box-shadow: 0 4px 16px rgba(230,153,0,0.35); }
+.modal-submit-send     { background: var(--blue);  box-shadow: 0 4px 16px rgba(0,122,255,0.35); }
+

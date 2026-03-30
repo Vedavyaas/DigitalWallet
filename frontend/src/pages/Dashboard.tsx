@@ -17,6 +17,9 @@ interface BankAccount {
   userUpdateRequest: boolean;
 }
 
+type PaymentAction = 'deposit' | 'withdraw' | 'send';
+type ActiveView = 'accounts' | 'add' | 'payment';
+
 const BANK_OPTIONS = ['SBI','UNION_BANK','CENTRAL_BANK','BANK_OF_BARODA','FEDERAL_BANK','HDFC'];
 const BANK_LABELS: Record<string, string> = {
   SBI: 'SBI', UNION_BANK: 'Union Bank', CENTRAL_BANK: 'Central Bank',
@@ -26,16 +29,27 @@ const BANK_EMOJI: Record<string, string> = {
   SBI: '🏦', UNION_BANK: '🏛️', CENTRAL_BANK: '🏢', BANK_OF_BARODA: '🏪', FEDERAL_BANK: '🏗️', HDFC: '💳'
 };
 
+const GW = 'http://localhost:8085';
+
 export default function Dashboard() {
-  const [accounts, setAccounts]     = useState<BankAccount[]>([]);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState('');
-  const [message, setMessage]       = useState('');
-  const [activeView, setActiveView] = useState<'accounts'|'add'>('accounts');
-  const [newAccount, setNewAccount] = useState({
+  const [accounts, setAccounts]       = useState<BankAccount[]>([]);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState('');
+  const [message, setMessage]         = useState('');
+  const [activeView, setActiveView]   = useState<ActiveView>('accounts');
+  const [newAccount, setNewAccount]   = useState({
     name: '', accountNumber: '', cifnumber: '', branch: '',
     ifsccode: '', bankName: 'SBI', accountType: 'SAVINGS', emailBank: ''
   });
+
+  // payment modal state
+  const [selectedAcc, setSelectedAcc] = useState<BankAccount | null>(null);
+  const [payAction, setPayAction]     = useState<PaymentAction>('deposit');
+  const [payAmount, setPayAmount]     = useState('');
+  const [toUser, setToUser]           = useState('');
+  const [payLoading, setPayLoading]   = useState(false);
+  const [balance, setBalance]         = useState<string | null>(null);
+
   const navigate = useNavigate();
 
   const getConfig = () => ({
@@ -47,7 +61,7 @@ export default function Dashboard() {
   const fetchAccounts = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const res = await axios.get('http://localhost:8085/WALLETSERVICE/get/bank/account', getConfig());
+      const res = await axios.get(`${GW}/WALLETSERVICE/get/bank/account`, getConfig());
       setAccounts(Array.isArray(res.data) ? res.data : []);
     } catch (err: any) {
       if (err.response?.status === 401) navigate('/login');
@@ -61,23 +75,33 @@ export default function Dashboard() {
     }
   }, [navigate]);
 
-  // Auto-poll every 12s to refresh verification status
+  const fetchBalance = useCallback(async () => {
+    try {
+      const res = await axios.get(`${GW}/payment/get/balance`, getConfig());
+      setBalance(res.data !== undefined ? String(res.data) : null);
+    } catch {
+      setBalance(null);
+    }
+  }, []);
+
   useEffect(() => {
     fetchAccounts();
     const interval = setInterval(() => fetchAccounts(true), 12000);
     return () => clearInterval(interval);
   }, [fetchAccounts]);
 
+  useEffect(() => {
+    if (activeView === 'payment') fetchBalance();
+  }, [activeView, fetchBalance]);
+
+  /* ── account actions ── */
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    dismissMsg();
-    setLoading(true);
+    e.preventDefault(); dismissMsg(); setLoading(true);
     try {
-      const res = await axios.post('http://localhost:8085/WALLETSERVICE/bank/account/register', newAccount, getConfig());
+      const res = await axios.post(`${GW}/WALLETSERVICE/bank/account/register`, newAccount, getConfig());
       setMessage(typeof res.data === 'string' ? res.data : 'Account registered successfully!');
       setNewAccount({ name:'', accountNumber:'', cifnumber:'', branch:'', ifsccode:'', bankName:'SBI', accountType:'SAVINGS', emailBank:'' });
-      setActiveView('accounts');
-      fetchAccounts();
+      setActiveView('accounts'); fetchAccounts();
     } catch (err: any) {
       const msg = typeof err.response?.data === 'string'
         ? err.response.data : err.response?.data?.message || err.response?.data?.error || 'Failed to register.';
@@ -88,12 +112,12 @@ export default function Dashboard() {
   const handleSetDefault = async (id: number) => {
     dismissMsg();
     try {
-      const res = await axios.post(`http://localhost:8085/WALLETSERVICE/register/default/account?id=${id}`, {}, getConfig());
+      const res = await axios.post(`${GW}/WALLETSERVICE/register/default/account?id=${id}`, {}, getConfig());
       setMessage(typeof res.data === 'string' ? res.data : 'Default account updated!');
       fetchAccounts();
     } catch (err: any) {
       const msg = typeof err.response?.data === 'string'
-        ? err.response.data : err.response?.data?.message || err.response?.data?.error || 'Failed to set default.';
+        ? err.response.data : err.response?.data?.message || 'Failed to set default.';
       setError(msg);
     }
   };
@@ -101,28 +125,68 @@ export default function Dashboard() {
   const handleVerify = async (id: number) => {
     dismissMsg();
     try {
-      const res = await axios.post(`http://localhost:8085/WALLETSERVICE/bank/account/verify?id=${id}`, {}, getConfig());
+      const res = await axios.post(`${GW}/WALLETSERVICE/bank/account/verify?id=${id}`, {}, getConfig());
       setMessage(typeof res.data === 'string' ? res.data : 'Verification initiated! Status will update automatically.');
       fetchAccounts();
     } catch (err: any) {
       const msg = typeof err.response?.data === 'string'
-        ? err.response.data : err.response?.data?.message || err.response?.data?.error || 'Verification failed.';
+        ? err.response.data : err.response?.data?.message || 'Verification failed.';
       setError(msg);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('jwt_token');
-    navigate('/login');
+  const handleLogout = () => { localStorage.removeItem('jwt_token'); navigate('/login'); };
+
+  /* ── payment actions ── */
+  const openPayModal = (acc: BankAccount, action: PaymentAction) => {
+    setSelectedAcc(acc); setPayAction(action);
+    setPayAmount(''); setToUser('');
+    dismissMsg();
+  };
+  const closePayModal = () => { setSelectedAcc(null); };
+
+  const handlePaySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payAmount || isNaN(Number(payAmount)) || Number(payAmount) <= 0) {
+      setError('Enter a valid amount.'); return;
+    }
+    setPayLoading(true); dismissMsg();
+    try {
+      let res;
+      if (payAction === 'deposit') {
+        res = await axios.post(`${GW}/payment/account/deposit?amount=${payAmount}`, {}, getConfig());
+      } else if (payAction === 'withdraw') {
+        res = await axios.post(`${GW}/payment/account/withdraw?amount=${payAmount}`, {}, getConfig());
+      } else {
+        if (!toUser.trim()) { setError('Enter recipient username.'); setPayLoading(false); return; }
+        res = await axios.post(`${GW}/payment/transfer/money?amount=${payAmount}&toUser=${toUser.trim()}`, {}, getConfig());
+      }
+      setMessage(typeof res.data === 'string' ? res.data : 'Transaction successful!');
+      setSelectedAcc(null);
+      fetchBalance();
+    } catch (err: any) {
+      const msg = typeof err.response?.data === 'string'
+        ? err.response.data : err.response?.data?.message || 'Transaction failed.';
+      setError(msg);
+    } finally { setPayLoading(false); }
   };
 
-  const nav = [
+  /* ── sidebar nav ── */
+  const nav: { id: ActiveView; icon: string; label: string }[] = [
     { id: 'accounts', icon: '💳', label: 'Accounts' },
+    { id: 'payment',  icon: '💸', label: 'Payments' },
     { id: 'add',      icon: '➕', label: 'Add Account' },
   ];
 
+  const actionMeta: Record<PaymentAction, { color: string; icon: string; label: string; btnClass: string }> = {
+    deposit:  { color: 'var(--green)', icon: '⬇️', label: 'Deposit',  btnClass: 'pay-btn-deposit'  },
+    withdraw: { color: 'var(--amber)', icon: '⬆️', label: 'Withdraw', btnClass: 'pay-btn-withdraw' },
+    send:     { color: 'var(--blue)',  icon: '➤',  label: 'Send',     btnClass: 'pay-btn-send'     },
+  };
+
   return (
     <div className="dash-shell">
+
       {/* ── SIDEBAR ── */}
       <aside className="sidebar">
         <div className="sidebar-brand">
@@ -138,7 +202,7 @@ export default function Dashboard() {
             <button
               key={item.id}
               className={`sidebar-item ${activeView === item.id ? 'active' : ''}`}
-              onClick={() => { setActiveView(item.id as any); dismissMsg(); }}
+              onClick={() => { setActiveView(item.id); dismissMsg(); }}
             >
               <span className="sidebar-item-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -153,10 +217,9 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* ── MAIN CONTENT ── */}
+      {/* ── MAIN ── */}
       <main className="dash-main">
 
-        {/* Toasts */}
         {error   && (
           <div className="toast toast-error">
             ⚠️ {error}
@@ -176,7 +239,7 @@ export default function Dashboard() {
             <div className="view-header">
               <div>
                 <h2 className="view-title">Your Accounts</h2>
-                <p className="view-desc">Status refreshes automatically every 12 seconds</p>
+                <p className="view-desc">Tap a card to deposit, withdraw or send money · Status refreshes every 12s</p>
               </div>
               <button className="btn-ghost" onClick={() => fetchAccounts()} disabled={loading}>
                 {loading ? '…' : '↻ Refresh'}
@@ -194,9 +257,7 @@ export default function Dashboard() {
                 {accounts.map(acc => (
                   <div key={acc.id} className="account-card">
                     <div className="ac-top">
-                      <div className="ac-bank-icon">
-                        {BANK_EMOJI[acc.bankName] || '🏦'}
-                      </div>
+                      <div className="ac-bank-icon">{BANK_EMOJI[acc.bankName] || '🏦'}</div>
                       <div className={`ac-status ${acc.verified ? 'status-verified' : acc.userUpdateRequest ? 'status-pending' : 'status-unverified'}`}>
                         <span className="status-dot" />
                         {acc.verified ? 'Verified' : acc.userUpdateRequest ? 'In Progress' : 'Unverified'}
@@ -209,6 +270,21 @@ export default function Dashboard() {
                       <div className="ac-number">•••• {acc.accountNumber.slice(-4)}</div>
                       <div className="ac-type">{acc.accountType} · {acc.branch}</div>
                     </div>
+
+                    {/* Quick payment actions — show only for verified accounts */}
+                    {acc.verified && (
+                      <div className="ac-pay-strip">
+                        <button className="pay-strip-btn pay-strip-deposit" onClick={() => openPayModal(acc, 'deposit')}>
+                          <span>⬇</span> Deposit
+                        </button>
+                        <button className="pay-strip-btn pay-strip-withdraw" onClick={() => openPayModal(acc, 'withdraw')}>
+                          <span>⬆</span> Withdraw
+                        </button>
+                        <button className="pay-strip-btn pay-strip-send" onClick={() => openPayModal(acc, 'send')}>
+                          <span>➤</span> Send
+                        </button>
+                      </div>
+                    )}
 
                     <div className="ac-actions">
                       <button className="ac-btn ac-btn-default" onClick={() => handleSetDefault(acc.id)}>
@@ -226,6 +302,57 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        )}
+
+        {/* ── PAYMENT HUB VIEW ── */}
+        {activeView === 'payment' && (
+          <div className="view-container">
+            <div className="view-header">
+              <div>
+                <h2 className="view-title">Payments</h2>
+                <p className="view-desc">Deposit, withdraw, or send money — choose an account below</p>
+              </div>
+              <button className="btn-ghost" onClick={fetchBalance}>↻ Refresh Balance</button>
+            </div>
+
+            {/* Balance pill */}
+            <div className="balance-card">
+              <div className="balance-label">Wallet Balance</div>
+              <div className="balance-amount">
+                {balance !== null ? `₹ ${parseFloat(balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
+              </div>
+            </div>
+
+            {accounts.filter(a => a.verified).length === 0 ? (
+              <div className="empty-state" style={{ paddingTop: 48 }}>
+                <div className="empty-icon">💸</div>
+                <p className="empty-text">No verified accounts</p>
+                <p className="empty-sub">Verify an account first before making payments</p>
+              </div>
+            ) : (
+              <>
+                <h3 className="pay-section-title">Select Account</h3>
+                <div className="pay-account-list">
+                  {accounts.filter(a => a.verified).map(acc => (
+                    <div key={acc.id} className="pay-account-row">
+                      <div className="pay-acc-info">
+                        <span className="pay-acc-emoji">{BANK_EMOJI[acc.bankName] || '🏦'}</span>
+                        <div>
+                          <div className="pay-acc-bank">{BANK_LABELS[acc.bankName] || acc.bankName}</div>
+                          <div className="pay-acc-num">•••• {acc.accountNumber.slice(-4)}</div>
+                        </div>
+                      </div>
+                      <div className="pay-acc-actions">
+                        <button className="pay-action-btn pay-action-deposit" onClick={() => openPayModal(acc, 'deposit')}>⬇ Deposit</button>
+                        <button className="pay-action-btn pay-action-withdraw" onClick={() => openPayModal(acc, 'withdraw')}>⬆ Withdraw</button>
+                        <button className="pay-action-btn pay-action-send" onClick={() => openPayModal(acc, 'send')}>➤ Send</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
@@ -310,6 +437,74 @@ export default function Dashboard() {
           </div>
         )}
       </main>
+
+      {/* ── PAYMENT MODAL ── */}
+      {selectedAcc && (
+        <div className="modal-overlay" onClick={closePayModal}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+            {/* header */}
+            <div className="modal-header">
+              <div className="modal-acc-chip">
+                <span>{BANK_EMOJI[selectedAcc.bankName] || '🏦'}</span>
+                <span>{BANK_LABELS[selectedAcc.bankName] || selectedAcc.bankName} · •••• {selectedAcc.accountNumber.slice(-4)}</span>
+              </div>
+              <button className="modal-close" onClick={closePayModal}>✕</button>
+            </div>
+
+            {/* action tabs */}
+            <div className="modal-tabs">
+              {(['deposit', 'withdraw', 'send'] as PaymentAction[]).map(a => (
+                <button
+                  key={a}
+                  className={`modal-tab ${payAction === a ? 'modal-tab-active-' + a : ''}`}
+                  onClick={() => { setPayAction(a); setPayAmount(''); setToUser(''); dismissMsg(); }}
+                >
+                  {actionMeta[a].icon} {actionMeta[a].label}
+                </button>
+              ))}
+            </div>
+
+            {/* form */}
+            <form onSubmit={handlePaySubmit} className="modal-form">
+              {error && <div className="toast toast-error" style={{ marginBottom: 12 }}>⚠️ {error}<button className="toast-close" onClick={dismissMsg}>✕</button></div>}
+
+              <label className="field-label">Amount (₹)</label>
+              <input
+                className="field-input modal-amount-input"
+                type="number"
+                min="1"
+                step="0.01"
+                placeholder="0.00"
+                value={payAmount}
+                onChange={e => setPayAmount(e.target.value)}
+                required
+              />
+
+              {payAction === 'send' && (
+                <>
+                  <label className="field-label" style={{ marginTop: 14, display: 'block' }}>Recipient Username</label>
+                  <input
+                    className="field-input"
+                    type="text"
+                    placeholder="Enter username"
+                    value={toUser}
+                    onChange={e => setToUser(e.target.value)}
+                    required
+                  />
+                </>
+              )}
+
+              <button
+                type="submit"
+                className={`modal-submit-btn modal-submit-${payAction}`}
+                disabled={payLoading}
+              >
+                {payLoading ? 'Processing…' : `Confirm ${actionMeta[payAction].label}`}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
