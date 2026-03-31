@@ -15,5 +15,7 @@
     <module>AuthenticationService</module>
     <module>WalletService</module>
     <module>VerificationService</module>
+    <module>PaymentService</module>
+    <module>LoanService</module>
   </modules>
 </project>
